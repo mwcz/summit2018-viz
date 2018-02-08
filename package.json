@@ -1,0 +1,21 @@
+{
+  "name": "retro-summit-2018",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "browser-sync start --server --serveStatic dist/ --files 'dist/**/*' --directory",
+    "parcel": "parcel watch --no-cache --no-hmr src/index.html",
+    "start": "npm run parcel & npm run serve",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-preset-env": "^1.6.1",
+    "parcel-bundler": "^1.5.1",
+    "prettier": "^1.10.2",
+    "three": "^0.89.0"
+  }
+}
