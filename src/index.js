@@ -8,4 +8,6 @@ log("launching app");
 
 const stage = new Stage();
 
+window.stage = stage;
+
 stage.use(ParticlesAddon);
