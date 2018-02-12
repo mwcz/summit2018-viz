@@ -4,10 +4,11 @@ import { makeLogger } from "../logging/Logger";
 const log = makeLogger("Stage");
 
 class Stage {
-  constructor({ container = document.body } = {}) {
+  constructor({ container = document.body, data = {} } = {}) {
     log("created");
     this.addons = [];
     this.container = container;
+    this.data = {}; // arbitrary store for addons to share data
 
     this._init();
 
@@ -20,18 +21,34 @@ class Stage {
     this.addons.push(addon);
   }
   _init() {
-    this._initCamera();
     this._initScene();
     this._initRenderer();
+    this._initCamera();
   }
   _initCamera() {
-    this.camera = new THREE.PerspectiveCamera(
-      30,
-      window.innerWidth / window.innerHeight,
+    // this._initOrthographicCamera();
+    this._initPerspectiveCamera();
+  }
+  _initPerspectiveCamera() {
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    log(`res: ${w} x ${h}`);
+    this.camera = new THREE.PerspectiveCamera(70, w / h, 1, 1000);
+    this.camera.position.z = 400;
+  }
+  _initOrthographicCamera() {
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    const f = 1000;
+
+    this.camera = new THREE.OrthographicCamera(
+      w / -2,
+      w / 2,
+      h / 2,
+      h / -2,
       1,
-      3000
+      f
     );
-    this.camera.position.y = -160;
     this.camera.position.z = 400;
   }
   _initScene() {

@@ -5,6 +5,7 @@ const log = makeLogger("Addon");
 class Addon {
   constructor(stage) {
     log(`created ${this.constructor.name}`);
+    this.name = this.constructor.name;
   }
   update(stage) {}
 }
