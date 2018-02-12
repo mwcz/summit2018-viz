@@ -1,29 +1,46 @@
 import * as THREE from "three";
-import { makeLogger } from "../logging/Logger";
+import OrbitControls from "./OrbitControls.js";
+import DropImageSource from "./DropImageSource.js";
+import ParticleImageFactory from "./ParticleImageFactory.js";
+import { makeLogger } from "./logging/Logger";
 
 const log = makeLogger("Stage");
 
-class Stage {
+export default class Stage {
   constructor({ container = document.body, data = {} } = {}) {
     log("created");
-    this.addons = [];
+    this.actors = [];
     this.container = container;
-    this.data = {}; // arbitrary store for addons to share data
 
     this._init();
 
     // start the animation loop
     this._render();
   }
-  use(addonClass) {
-    const addon = new addonClass(this);
-    log(`using addon ${addon.name}`);
-    this.addons.push(addon);
-  }
   _init() {
     this._initScene();
     this._initRenderer();
     this._initCamera();
+    this._initControls();
+
+    this._initImageSource();
+  }
+  _initControls() {
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+  }
+  _initImageSource() {
+    this._initDropImageSource();
+  }
+  _initDropImageSource() {
+    const dropSource = new DropImageSource();
+    dropSource.onImage(pixels => {
+      log(`image dropped, ${pixels.width}x${pixels.height}`);
+      const particleImage = ParticleImageFactory.create(this, pixels);
+      this._registerActor(particleImage);
+    });
+  }
+  _registerActor(actor) {
+    this.actors.push(actor);
   }
   _initCamera() {
     // this._initOrthographicCamera();
@@ -33,7 +50,7 @@ class Stage {
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     log(`res: ${w} x ${h}`);
-    this.camera = new THREE.PerspectiveCamera(70, w / h, 1, 1000);
+    this.camera = new THREE.PerspectiveCamera(70, w / h, 1, 3000);
     this.camera.position.z = 400;
   }
   _initOrthographicCamera() {
@@ -55,13 +72,13 @@ class Stage {
     this.scene = new THREE.Scene();
   }
   _initRenderer() {
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.container.appendChild(this.renderer.domElement);
   }
   _update() {
-    this.addons.forEach(addon => addon.update(this));
+    this.actors.forEach(actor => actor.update(this));
   }
   _render() {
     requestAnimationFrame(this._render.bind(this));
@@ -69,5 +86,3 @@ class Stage {
     this.renderer.render(this.scene, this.camera);
   }
 }
-
-export default Stage;
