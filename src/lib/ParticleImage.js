@@ -26,9 +26,9 @@ export default class ParticleImage extends Actor {
     const pos = this.geometry.attributes.position.array;
     for (let i = 0; i < pos.length; ++i) {
       // pos[i + 0] += 0.1;
-      pos[i + 0] += (Math.random() - 0.5) / 8;
-      pos[i + 1] += (Math.random() - 0.5) / 8;
-      pos[i + 2] += (Math.random() - 0.5) / 8;
+      pos[i + 0] += (Math.random() - 0.5) / 10;
+      pos[i + 1] += (Math.random() - 0.5) / 10;
+      pos[i + 2] += (Math.random() - 0.5) / 10;
     }
     this.geometry.attributes.position.needsUpdate = true;
   }

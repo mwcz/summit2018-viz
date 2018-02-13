@@ -2,7 +2,7 @@ import * as THREE from "three";
 import OrbitControls from "./OrbitControls.js";
 import DropImageSource from "./DropImageSource.js";
 import ParticleImageFactory from "./ParticleImageFactory.js";
-import { makeLogger } from "./logging/Logger";
+import { makeLogger } from "./logging/Logger.js";
 
 const log = makeLogger("Stage");
 

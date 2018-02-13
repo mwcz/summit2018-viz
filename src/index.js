@@ -1,5 +1,5 @@
-import Stage from "./lib/Stage";
-import { makeLogger } from "./lib/logging/Logger";
+import Stage from "./lib/Stage.js";
+import { makeLogger } from "./lib/logging/Logger.js";
 
 const log = makeLogger("index");
 
