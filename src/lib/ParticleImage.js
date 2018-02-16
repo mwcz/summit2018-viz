@@ -16,51 +16,49 @@ export default class ParticleImage extends Actor {
     log("created");
 
     this._initParticles();
+
+    setTimeout(this._startMove.bind(this), 1000);
   }
   update() {
     if (window.jitter) {
       this._jitterParticles();
     }
 
-    this._updateMove();
-
-    // log(`updating ${this.name}`);
-  }
-
-  _startMove(x = 0, y = 0) {
-    for (let i = 0; i < this.destinations.length; i += 3) {
-      this.destinations[i + 0] = x;
-      this.destinations[i + 1] = y;
+    if (this.moving) {
+      this._updateMove();
     }
   }
 
-  _updateMove(l = 0.1) {
-    const position = this.geometry.attributes.position;
-    for (let i = 0; i < position.count; ++i) {
+  _startMove() {
+    this.moveTimer = 0;
+    this.moving = true;
+  }
+
+  _updateMove() {
+    if (this.moveTimer > 2.0) {
+      this.moving = false;
+      return;
+    }
+    const posAttr = this.geometry.attributes.position;
+    const pos = this.geometry.attributes.position.array;
+    for (let i = 0; i < posAttr.count; ++i) {
       const i3 = i * 3;
-
-      const x =
-        (1 - l) * position.array[i3 + 0] + l * this.destinations[i3 + 0];
-      const y =
-        (1 - l) * position.array[i3 + 1] + l * this.destinations[i3 + 1];
-
-      // if (i === 1) {
-      //   console.log(
-      //     `moving ${position.array[i + 0]},${position.array[i + 1]} toward ${
-      //       this.destinations[i + 0]
-      //     },${this.destinations[i + 1]}... currently ${x},${y}`
-      //   );
-      // }
-      position.array[i3 + 0] = x;
-      position.array[i3 + 1] = y;
+      const progress = Math.min(
+        1,
+        Math.max(0, this.moveTimer - this.moveDelay.array[i])
+      );
+      const point = this.paths[i].getPoint(progress);
+      pos[i3 + 0] = point.x; // + this.initialPositions[i3 + 0] / 10;
+      pos[i3 + 1] = point.y; // + this.initialPositions[i3 + 1] / 10;
     }
     this.geometry.attributes.position.needsUpdate = true;
+
+    this.moveTimer += 0.003;
   }
 
   _jitterParticles() {
     const pos = this.geometry.attributes.position.array;
-    for (let i = 0; i < pos.length; ++i) {
-      // pos[i + 0] += 0.1;
+    for (let i = 0; i < pos.length; i += 3) {
       pos[i + 0] += (Math.random() - 0.5) / 10;
       pos[i + 1] += (Math.random() - 0.5) / 10;
       pos[i + 2] += (Math.random() - 0.5) / 10;
@@ -72,6 +70,8 @@ export default class ParticleImage extends Actor {
     this.geometry = this._getGeometry();
     this.material = this._getMaterial();
     this.points = this._getPoints(this.geometry, this.material);
+    this.paths = this._getPaths(this.geometry);
+    this.moveDelay = this._getMoveDelayAttribute();
 
     log("particles initialized");
 
@@ -80,17 +80,29 @@ export default class ParticleImage extends Actor {
     }
   }
 
+  _getPaths(geometry) {
+    const paths = [];
+    log("initializing paths");
+    const positions = geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+      const startPoint = new THREE.Vector2(positions[i], positions[i + 1]);
+      const path = Paths.get(startPoint);
+      paths.push(path);
+    }
+    return paths;
+  }
+
   _getGeometry() {
     log("creating geometry");
     const geometry = new THREE.BufferGeometry();
 
     const positions = this._getPositionAttribute();
 
+    // save a copy of the initial positions
+    this.initialPositions = positions.clone().array;
+
     geometry.addAttribute("position", positions);
     geometry.addAttribute("color", this._getColorAttribute(positions));
-    // not needed as an attribute until I switch to custom shaders
-    // geometry.addAttribute("destination", this._getDestinationAttribute(positions));
-    this.destinations = this._getDestinationAttribute(positions);
 
     return geometry;
   }
@@ -107,6 +119,7 @@ export default class ParticleImage extends Actor {
     log("creating material");
     return new THREE.PointsMaterial({
       size: 2.0,
+      // size: 1.3,
       color: 0xffffff,
       vertexColors: THREE.VertexColors
       // map: new THREE.Texture()
@@ -130,9 +143,15 @@ export default class ParticleImage extends Actor {
     return new THREE.Float32BufferAttribute(array, 3);
   }
 
-  _getDestinationAttribute(positions) {
-    log("creating destination attribute");
-    return positions.clone().array;
+  _getMoveDelayAttribute() {
+    log("creating move delay attribute");
+    const array = new Float32Array(this.pointCount);
+
+    for (let i = 0; i < this.pointCount; i++) {
+      array[i] = Math.random() / 3;
+    }
+
+    return new THREE.Float32BufferAttribute(array, 1);
   }
 
   /* colors are based on positions, currently, but not forever */
