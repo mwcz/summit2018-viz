@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import Actor from "./Actor.js";
-import { makeLogger } from "./logging/Logger";
+import { makeLogger } from "./logging/Logger.js";
+import Paths from "./Paths.js";
 
 const log = makeLogger("ParticleImage");
 
@@ -20,8 +21,42 @@ export default class ParticleImage extends Actor {
     if (window.jitter) {
       this._jitterParticles();
     }
+
+    this._updateMove();
+
     // log(`updating ${this.name}`);
   }
+
+  _startMove(x = 0, y = 0) {
+    for (let i = 0; i < this.destinations.length; i += 3) {
+      this.destinations[i + 0] = x;
+      this.destinations[i + 1] = y;
+    }
+  }
+
+  _updateMove(l = 0.1) {
+    const position = this.geometry.attributes.position;
+    for (let i = 0; i < position.count; ++i) {
+      const i3 = i * 3;
+
+      const x =
+        (1 - l) * position.array[i3 + 0] + l * this.destinations[i3 + 0];
+      const y =
+        (1 - l) * position.array[i3 + 1] + l * this.destinations[i3 + 1];
+
+      // if (i === 1) {
+      //   console.log(
+      //     `moving ${position.array[i + 0]},${position.array[i + 1]} toward ${
+      //       this.destinations[i + 0]
+      //     },${this.destinations[i + 1]}... currently ${x},${y}`
+      //   );
+      // }
+      position.array[i3 + 0] = x;
+      position.array[i3 + 1] = y;
+    }
+    this.geometry.attributes.position.needsUpdate = true;
+  }
+
   _jitterParticles() {
     const pos = this.geometry.attributes.position.array;
     for (let i = 0; i < pos.length; ++i) {
@@ -53,6 +88,9 @@ export default class ParticleImage extends Actor {
 
     geometry.addAttribute("position", positions);
     geometry.addAttribute("color", this._getColorAttribute(positions));
+    // not needed as an attribute until I switch to custom shaders
+    // geometry.addAttribute("destination", this._getDestinationAttribute(positions));
+    this.destinations = this._getDestinationAttribute(positions);
 
     return geometry;
   }
@@ -68,7 +106,7 @@ export default class ParticleImage extends Actor {
   _getMaterial() {
     log("creating material");
     return new THREE.PointsMaterial({
-      size: 1.3,
+      size: 2.0,
       color: 0xffffff,
       vertexColors: THREE.VertexColors
       // map: new THREE.Texture()
@@ -85,11 +123,16 @@ export default class ParticleImage extends Actor {
       const z = 0;
 
       array[i * 3 + 0] = x;
-      array[i * 3 + 1] = -y + this.imagedata.height;
+      array[i * 3 + 1] = -y + this.imagedata.height; // flip y
       array[i * 3 + 2] = z;
     }
 
     return new THREE.Float32BufferAttribute(array, 3);
+  }
+
+  _getDestinationAttribute(positions) {
+    log("creating destination attribute");
+    return positions.clone().array;
   }
 
   /* colors are based on positions, currently, but not forever */
@@ -105,57 +148,8 @@ export default class ParticleImage extends Actor {
       array[i3 + 0] = this.imagedata.data[i4 + 0] / 255;
       array[i3 + 1] = this.imagedata.data[i4 + 1] / 255;
       array[i3 + 2] = this.imagedata.data[i4 + 2] / 255;
-      // const x = positions.array[i + 0];
-      // const y = positions.array[i + 1];
-      // const z = positions.array[i + 2];
-
-      // const r = x / 400 + 0.5;
-      // const g = y / 400 + 0.5;
-      // const b = z / 400 + 0.5;
-
-      // color.setRGB(r, g, b);
-
-      // array[i + 0] = color.r;
-      // array[i + 1] = color.g;
-      // array[i + 2] = color.b;
     }
 
     return new THREE.Float32BufferAttribute(array, 3);
   }
 }
-
-////////////////////////////////////////////////////////////////////////
-//                            WOOT, TOTS!                             //
-////////////////////////////////////////////////////////////////////////
-
-// function getImageData( image ) {
-
-//     var canvas = document.createElement( 'canvas' );
-//     canvas.width = image.width;
-//     canvas.height = image.height;
-
-//     var context = canvas.getContext( '2d' );
-//     context.drawImage( image, 0, 0 );
-
-//     return context.getImageData( 0, 0, image.width, image.height );
-
-// }
-
-// function getPixel( imagedata, x, y ) {
-
-//     var position = ( x + imagedata.width * y ) * 4, data = imagedata.data;
-//     return { r: data[ position ], g: data[ position + 1 ], b: data[ position + 2 ], a: data[ position + 3 ] };
-
-// }
-
-// const imagedata = getImageData(stage.data.texture.image).data;
-// for(var i = 0; i < imagedata.length / 4; i++) {
-//   stage.addons[1].geometry.attributes.color.array[i*3+0] = imagedata[i*4+0] / 255;
-//   stage.addons[1].geometry.attributes.color.array[i*3+1] = imagedata[i*4+1] / 255;
-//   stage.addons[1].geometry.attributes.color.array[i*3+2] = imagedata[i*4+2] / 255;
-// }
-// stage.addons[1].geometry.attributes.color.needsUpdate = true;
-
-////////////////////////////////////////////////////////////////////////
-//                     THE ABOVE MAKES TOTS WORK                      //
-////////////////////////////////////////////////////////////////////////
