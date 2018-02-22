@@ -72,9 +72,10 @@ export default class Stage {
     this.scene = new THREE.Scene();
   }
   _initRenderer() {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setClearColor(0, 0);
     this.container.appendChild(this.renderer.domElement);
   }
   _update() {
