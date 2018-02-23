@@ -9,7 +9,7 @@ export default class MovingParticles extends Actor {
   constructor(stage) {
     super(stage);
 
-    this.pointCount = 1;
+    this.pointCount = 2;
 
     log("created");
 
@@ -28,15 +28,15 @@ export default class MovingParticles extends Actor {
     const progress = this.geometry.attributes.progress;
 
     for (let i = 0; i < progress.array.length; ++i) {
-      progress.array[i] += 0.1;
+      progress.array[i] += 0.01;
     }
 
     progress.needsUpdate = true;
   }
 
   _initParticles(addToScene = true) {
-    this.geometry = this._getGeometry();
     this.material = this._getMaterial();
+    this.geometry = this._getGeometry(this.material);
     this.points = this._getPoints(this.geometry, this.material);
     this.moveDelay = this._getMoveDelayAttribute();
 
@@ -47,7 +47,7 @@ export default class MovingParticles extends Actor {
     }
   }
 
-  _getGeometry() {
+  _getGeometry(material) {
     log("creating geometry");
     const geometry = new THREE.BufferGeometry();
 
@@ -58,7 +58,10 @@ export default class MovingParticles extends Actor {
 
     geometry.addAttribute("position", positions);
     geometry.addAttribute("progress", this._getProgressAttribute());
-    geometry.addAttribute("path", this._getPathAttribute(this.pathCount));
+    geometry.addAttribute(
+      "path",
+      this._getPathAttribute(material.uniforms.paths.value.length)
+    );
     geometry.addAttribute("color", this._getColorAttribute(positions));
 
     return geometry;
@@ -103,7 +106,20 @@ export default class MovingParticles extends Actor {
   _getPathsUniform() {
     log("creating paths attribute");
     // [ x1, y1, x2, y2, x3, y3, ..., xN, yN ]
-    return new THREE.Uniform([0, 0, 30, 30, 60, -30]);
+    return new THREE.Uniform([
+      0,
+      0,
+      90,
+      0,
+      180,
+      -180,
+      0,
+      0,
+      -90,
+      0,
+      -180,
+      -180
+    ]);
   }
 
   _getProgressAttribute() {
@@ -114,11 +130,11 @@ export default class MovingParticles extends Actor {
 
   _getPathAttribute(pathCount) {
     log("creating path attribute");
-    const array = new Uint8Array(this.pointCount);
+    const array = new Float32Array(this.pointCount);
     for (let i = 0; i < this.pointCount; i++) {
-      array[i] = Math.random() * pathCount;
+      array[i] = i;
     }
-    return new THREE.Uint8BufferAttribute(array, 1);
+    return new THREE.Float32BufferAttribute(array, 1);
   }
 
   _getMoveDelayAttribute() {
