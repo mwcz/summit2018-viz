@@ -2,6 +2,7 @@ import * as THREE from "three";
 import OrbitControls from "./OrbitControls.js";
 import DropImageSource from "./DropImageSource.js";
 import ParticleImageFactory from "./ParticleImageFactory.js";
+import MovingParticleFactory from "./MovingParticleFactory.js";
 import { makeLogger } from "./logging/Logger.js";
 
 const log = makeLogger("Stage");
@@ -24,6 +25,7 @@ export default class Stage {
     this._initControls();
 
     this._initImageSource();
+    this._initMovingParticles();
   }
   _initControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -38,6 +40,10 @@ export default class Stage {
       const particleImage = ParticleImageFactory.create(this, pixels);
       this._registerActor(particleImage);
     });
+  }
+  _initMovingParticles() {
+    const mp = MovingParticleFactory.create(this);
+    this._registerActor(mp);
   }
   _registerActor(actor) {
     this.actors.push(actor);
