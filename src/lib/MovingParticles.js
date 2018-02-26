@@ -9,7 +9,7 @@ export default class MovingParticles extends Actor {
   constructor(stage) {
     super(stage);
 
-    this.pointCount = 2;
+    this.pointCount = 5e4;
 
     log("created");
 
@@ -35,10 +35,10 @@ export default class MovingParticles extends Actor {
   }
 
   _initParticles(addToScene = true) {
-    this.material = this._getMaterial();
-    this.geometry = this._getGeometry(this.material);
-    this.points = this._getPoints(this.geometry, this.material);
     this.moveDelay = this._getMoveDelayAttribute();
+    this.material = this._getMaterial();
+    this.geometry = this._getGeometry(this.material, this.moveDelay);
+    this.points = this._getPoints(this.geometry, this.material);
 
     log("particles initialized");
 
@@ -47,7 +47,7 @@ export default class MovingParticles extends Actor {
     }
   }
 
-  _getGeometry(material) {
+  _getGeometry(material, delay) {
     log("creating geometry");
     const geometry = new THREE.BufferGeometry();
 
@@ -57,7 +57,7 @@ export default class MovingParticles extends Actor {
     this.initialPositions = positions.clone().array;
 
     geometry.addAttribute("position", positions);
-    geometry.addAttribute("progress", this._getProgressAttribute());
+    geometry.addAttribute("progress", this._getProgressAttribute(delay));
     geometry.addAttribute(
       "path",
       this._getPathAttribute(material.uniforms.paths.value.length)
@@ -78,7 +78,7 @@ export default class MovingParticles extends Actor {
     const shaders = ShaderLoader.load();
     return new THREE.ShaderMaterial({
       uniforms: {
-        size: { type: "t", value: 16 },
+        size: { type: "t", value: 32 },
         paths: this._getPathsUniform()
       },
       vertexShader: shaders.vert,
@@ -106,25 +106,47 @@ export default class MovingParticles extends Actor {
   _getPathsUniform() {
     log("creating paths attribute");
     // [ x1, y1, x2, y2, x3, y3, ..., xN, yN ]
-    return new THREE.Uniform([
-      0,
-      0,
-      90,
-      0,
-      180,
-      -180,
-      0,
-      0,
-      -90,
-      0,
-      -180,
-      -180
-    ]);
+    return new THREE.Uniform(
+      [
+        58, // path 0
+        146,
+        68,
+        141,
+        78,
+        146,
+        88,
+        141,
+
+        58, // path 1
+        146,
+        68,
+        152,
+        78,
+        157,
+        88,
+        162,
+
+        58, // path 2
+        146,
+        68,
+        141,
+        78,
+        136,
+        88,
+        130
+      ].map((v, i) => {
+        if (i % 2 === 0) {
+          return (v - 58 - 10) * 20;
+        } else {
+          return (v - 146) * 20;
+        }
+      })
+    );
   }
 
-  _getProgressAttribute() {
+  _getProgressAttribute(delay) {
     log("creating progress attribute");
-    const array = new Float32Array(this.pointCount);
+    const array = delay.array.slice();
     return new THREE.Float32BufferAttribute(array, 1);
   }
 
@@ -132,7 +154,7 @@ export default class MovingParticles extends Actor {
     log("creating path attribute");
     const array = new Float32Array(this.pointCount);
     for (let i = 0; i < this.pointCount; i++) {
-      array[i] = i;
+      array[i] = i % pathCount;
     }
     return new THREE.Float32BufferAttribute(array, 1);
   }
@@ -142,7 +164,7 @@ export default class MovingParticles extends Actor {
     const array = new Float32Array(this.pointCount);
 
     for (let i = 0; i < this.pointCount; i++) {
-      array[i] = Math.random() / 3;
+      array[i] = -100 * Math.random();
     }
 
     return new THREE.Float32BufferAttribute(array, 1);
