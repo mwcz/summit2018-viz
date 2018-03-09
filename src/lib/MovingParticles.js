@@ -6,10 +6,15 @@ import ShaderLoader from "./ShaderLoader.js";
 const log = makeLogger("MovingParticles");
 
 export default class MovingParticles extends Actor {
-  constructor(stage) {
+  constructor(stage, paths = []) {
     super(stage);
 
-    this.pointCount = 5e4;
+    this.paths = paths;
+
+    this.pointCount = 1000;
+    this.speed = 0.005;
+    this.delaySpread = 3;
+    this.size = 32;
 
     log("created");
 
@@ -28,7 +33,7 @@ export default class MovingParticles extends Actor {
     const progress = this.geometry.attributes.progress;
 
     for (let i = 0; i < progress.array.length; ++i) {
-      progress.array[i] += 0.01;
+      progress.array[i] += this.speed;
     }
 
     progress.needsUpdate = true;
@@ -57,6 +62,8 @@ export default class MovingParticles extends Actor {
     this.initialPositions = positions.clone().array;
 
     geometry.addAttribute("position", positions);
+    geometry.addAttribute("moveDelay", this.moveDelay);
+    geometry.addAttribute("variation", this._getVariationAttribute());
     geometry.addAttribute("progress", this._getProgressAttribute(delay));
     geometry.addAttribute(
       "path",
@@ -78,7 +85,7 @@ export default class MovingParticles extends Actor {
     const shaders = ShaderLoader.load();
     return new THREE.ShaderMaterial({
       uniforms: {
-        size: { type: "t", value: 32 },
+        size: { type: "t", value: this.size },
         paths: this._getPathsUniform()
       },
       vertexShader: shaders.vert,
@@ -109,16 +116,16 @@ export default class MovingParticles extends Actor {
     return new THREE.Uniform(
       [
         58, // path 0
-        146,
+        146.2,
         68,
         141,
         78,
-        146,
+        146.4,
         88,
         141,
 
         58, // path 1
-        146,
+        146.2,
         68,
         152,
         78,
@@ -127,18 +134,20 @@ export default class MovingParticles extends Actor {
         162,
 
         58, // path 2
-        146,
+        146.2,
         68,
         141,
         78,
         136,
         88,
-        130
+        130.4
       ].map((v, i) => {
         if (i % 2 === 0) {
-          return (v - 58 - 10) * 20;
+          // offset x values a certain amount to center the graph
+          return (v - 58 - 13.1) * 19.4;
         } else {
-          return (v - 146) * 20;
+          // offset y values a certain amount to center the graph
+          return (v - 146) * 18.6;
         }
       })
     );
@@ -154,9 +163,22 @@ export default class MovingParticles extends Actor {
     log("creating path attribute");
     const array = new Float32Array(this.pointCount);
     for (let i = 0; i < this.pointCount; i++) {
-      array[i] = i % pathCount;
+      array[i] = this._pickPath(Math.random());
     }
     return new THREE.Float32BufferAttribute(array, 1);
+  }
+
+  /**
+   * Choose a path using the given probability distribution.
+   */
+  _pickPath(x = 0) {
+    const probabilitySums = this.paths.slice();
+
+    // add up the probabilities sequentially, so the final number in the array is 1.0
+
+    probabilitySums.forEach((p, i, c) => (c[i] = c[i] + (c[i - 1] || 0)));
+
+    return probabilitySums.findIndex(p => x <= p);
   }
 
   _getMoveDelayAttribute() {
@@ -164,7 +186,18 @@ export default class MovingParticles extends Actor {
     const array = new Float32Array(this.pointCount);
 
     for (let i = 0; i < this.pointCount; i++) {
-      array[i] = -100 * Math.random();
+      array[i] = -this.delaySpread * Math.random();
+    }
+
+    return new THREE.Float32BufferAttribute(array, 1);
+  }
+
+  _getVariationAttribute() {
+    log("creating position variation attribute");
+    const array = new Float32Array(this.pointCount);
+
+    for (let i = 0; i < this.pointCount; i++) {
+      array[i] = Math.random();
     }
 
     return new THREE.Float32BufferAttribute(array, 1);
@@ -179,9 +212,9 @@ export default class MovingParticles extends Actor {
 
     for (let i = 0; i < this.pointCount; ++i) {
       const i3 = i * 3;
-      array[i3 + 0] = 1;
-      array[i3 + 1] = 0;
-      array[i3 + 2] = 0;
+      array[i3 + 0] = 246 / 255;
+      array[i3 + 1] = 203 / 255;
+      array[i3 + 2] = 105 / 255;
     }
 
     return new THREE.Float32BufferAttribute(array, 3);
