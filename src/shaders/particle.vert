@@ -1,11 +1,11 @@
 // PATH_NODES is how many nodes there are in each particle's path
-#define PATH_NODES 4
+#define PATH_NODES ${PATH_NODES}
 
 // two components to each path node, x and y
-#define PATH_COMPONENTS 2
+#define PATH_COMPONENTS ${PATH_COMPONENTS}
 
 // how many paths there are (can't pass this in dynamically; array indices must be static)
-#define PATH_COUNT 3
+#define PATH_COUNT ${PATH_COUNT}
 
 // how many floats are in a single path
 #define PATH_LENGTH (PATH_NODES*PATH_COMPONENTS)
