@@ -7,7 +7,7 @@ export default class MovingParticleFactory {
   static create(stage) {
     log("creating a moving particle object");
 
-    const probability = [0.2, 0.7, 0.1];
+    const probability = [0.9, 0.05, 0.05];
 
     return new MovingParticles(stage, probability);
   }

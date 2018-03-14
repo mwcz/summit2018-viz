@@ -14,7 +14,7 @@ export default class MovingParticles extends Actor {
     this.pointCount = 1000;
     this.speed = 0.005;
     this.delaySpread = 3;
-    this.size = 32;
+    this.size = 22;
 
     log("created");
 
@@ -115,42 +115,78 @@ export default class MovingParticles extends Actor {
     // [ x1, y1, x2, y2, x3, y3, ..., xN, yN ]
     return new THREE.Uniform(
       [
-        58, // path 0
-        146.2,
-        68,
-        141,
-        78,
-        146.4,
-        88,
-        141,
-
-        58, // path 1
-        146.2,
-        68,
-        152,
-        78,
+        324,
+        534,
+        575,
+        408,
+        825,
+        281,
+        1076,
         157,
-        88,
-        162,
-
-        58, // path 2
-        146.2,
-        68,
-        141,
-        78,
-        136,
-        88,
-        130.4
+        324,
+        534,
+        574,
+        658,
+        826,
+        533,
+        1077,
+        658,
+        324,
+        534,
+        574,
+        658,
+        825,
+        783,
+        1077,
+        909
       ].map((v, i) => {
         if (i % 2 === 0) {
           // offset x values a certain amount to center the graph
-          return (v - 58 - 13.1) * 19.4;
+          return (v - window.innerWidth / 2) * 0.9;
         } else {
           // offset y values a certain amount to center the graph
-          return (v - 146) * 18.6;
+          return -(v - window.innerHeight / 2) * 0.9;
         }
       })
     );
+    // return new THREE.Uniform(
+    //   [
+    //     58, // path 0
+    //     146.2,
+    //     68,
+    //     141,
+    //     78,
+    //     146.4,
+    //     88,
+    //     141,
+
+    //     58, // path 1
+    //     146.2,
+    //     68,
+    //     152,
+    //     78,
+    //     157,
+    //     88,
+    //     162,
+
+    //     58, // path 2
+    //     146.2,
+    //     68,
+    //     141,
+    //     78,
+    //     136,
+    //     88,
+    //     130.4
+    //   ].map((v, i) => {
+    //     if (i % 2 === 0) {
+    //       // offset x values a certain amount to center the graph
+    //       return (v - 58 - 13.1) * 19.4;
+    //     } else {
+    //       // offset y values a certain amount to center the graph
+    //       return (v - 146) * 18.6;
+    //     }
+    //   })
+    // );
   }
 
   _getProgressAttribute(delay) {

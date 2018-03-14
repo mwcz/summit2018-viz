@@ -9,3 +9,38 @@ body {
 }
 [hidden] { display: none; }
 
+#path-tool {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 4px 8px;
+}
+#path-tool > * {
+    font-size: 80%;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+#path-tool button {
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 3px;
+}
+#path-tool textarea {
+    opacity: 0.1;
+    width: 40vw;
+    height: 8vh;
+    border: none;
+    background: rgba(0, 0, 0, 0);
+    color: white;
+    font-weight: normal;
+    font-family: monospace;
+    transition: opacity 0.1s ease-in, background-color 0.1s ease-in;
+}
+#path-tool textarea:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+#path-tool #start-path.active {
+    background: #286f2e;
+}
