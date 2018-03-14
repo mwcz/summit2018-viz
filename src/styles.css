@@ -25,6 +25,10 @@ body {
     color: white;
     border: none;
     border-radius: 3px;
+    cursor: pointer;
+}
+#path-tool button:hover {
+    background: #888;
 }
 #path-tool textarea {
     opacity: 0.1;
