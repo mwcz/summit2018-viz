@@ -1,4 +1,4 @@
-import { flatten, each } from "lodash";
+import { chain, map, uniq, flatten, each } from "lodash";
 
 ////////////////////////////////////////////////////////////////////////
 //                               POINT                                //
@@ -111,14 +111,47 @@ export default class PathTracer {
     this.currentPath = undefined;
   }
 
+  _pathsInvalid() {
+    const uniqPathLengths = chain(this.finalizedPaths)
+      .map("points")
+      .map("length")
+      .uniq()
+      .value();
+
+    if (uniqPathLengths.length === 1) {
+      return false; // path is valid
+    } else {
+      return "Paths must ALL have the exact same length.";
+    }
+  }
+
   _exportPath() {
-    const flattenedPoints = [];
+    // check whether the paths are valid
+    const invalid = this._pathsInvalid();
+    if (invalid) {
+      this._log(invalid);
+      return;
+    }
+
+    const paths = {};
+    const coordinates = [];
     flatten(this.finalizedPaths.map(p => p.points)).forEach(point => {
-      flattenedPoints.push(point.x);
-      flattenedPoints.push(point.y);
+      coordinates.push(point.x);
+      coordinates.push(point.y);
     });
-    console.log(flattenedPoints);
-    this.domEls.exportArea.textContent = flattenedPoints;
+
+    paths.nodes = this.finalizedPaths[0]
+      ? this.finalizedPaths[0].points.length
+      : 0;
+    paths.components = 2;
+    paths.count = this.finalizedPaths.length;
+    paths.coordinates = coordinates;
+
+    this._log(JSON.stringify(paths, null, 2));
+  }
+
+  _log(msg) {
+    this.domEls.exportArea.textContent = msg;
   }
 
   import(points) {
@@ -222,10 +255,5 @@ export default class PathTracer {
 
   _mouseDownHandler(ev) {
     ev.preventDefault();
-  }
-
-  _normalize() {
-    // find the longest path, then for any shorter paths, repeat their final
-    // point until they're as long as the longest path
   }
 }
