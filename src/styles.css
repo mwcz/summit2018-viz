@@ -1,0 +1,11 @@
+body {
+    background-image: url("./bg.png");
+    background-position: center;
+    background-size: cover;
+    color: #cdf;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+[hidden] { display: none; }
+
