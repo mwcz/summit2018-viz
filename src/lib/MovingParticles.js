@@ -6,24 +6,24 @@ import ShaderLoader from "./ShaderLoader.js";
 const log = makeLogger("MovingParticles");
 
 export default class MovingParticles extends Actor {
-  constructor(stage, paths = []) {
+  constructor(stage, paths = {}, probability = []) {
     super(stage);
+
+    this.probability = probability;
 
     this.paths = paths;
 
-    this.pathNodes = 4; // points in each path
-    this.pathCount = 3; // different paths
-    this.pathComponents = 2; // x and y
     this.pointCount = 1000;
     this.speed = 0.005;
     this.delaySpread = 3;
-    this.size = 22;
+    this.size = 32;
 
     log("created");
 
+    this._initRaycasting();
     this._initParticles();
 
-    // setTimeout(this._startMove.bind(this), 1000);
+    setTimeout(this._raycastPaths.bind(this), 500);
   }
   update() {
     this._updateMove();
@@ -40,6 +40,48 @@ export default class MovingParticles extends Actor {
     }
 
     progress.needsUpdate = true;
+  }
+
+  _initRaycasting() {
+    this._initRaycastPlane();
+    this._initRaycaster();
+  }
+
+  _initRaycastPlane() {
+    let geometry = new THREE.PlaneBufferGeometry(7500, 7500, 1, 1);
+    let material = new THREE.MeshBasicMaterial();
+    material.transparent = true;
+    material.opacity = 0;
+    let plane = new THREE.Mesh(geometry, material);
+    this.raycastPlane = plane;
+    this.stage.scene.add(plane);
+  }
+
+  _initRaycaster() {
+    this.raycaster = new THREE.Raycaster();
+  }
+
+  _raycast(x, y) {
+    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.stage.camera);
+    const result = [];
+    const intersection = this.raycaster.intersectObject(this.raycastPlane)[0]; // intersecting a plane, so there can be only one result
+
+    if (intersection) {
+      result.push(intersection.point.x);
+      result.push(intersection.point.y);
+    }
+
+    return result;
+  }
+
+  _raycastPaths() {
+    // raycast the coords to screenspace and then copy them into the paths uniform
+    const transformedCoords = this._transformCoordinates(
+      this.material.uniforms.paths.value
+    );
+    this.material.uniforms.paths.value.forEach(
+      (v, i, c) => (c[i] = transformedCoords[i])
+    );
   }
 
   _initParticles(addToScene = true) {
@@ -88,9 +130,9 @@ export default class MovingParticles extends Actor {
     const shaders = ShaderLoader.load();
 
     const vert = shaders.vert
-      .replace("${PATH_NODES}", this.pathNodes)
-      .replace("${PATH_COMPONENTS}", this.pathComponents)
-      .replace("${PATH_COUNT}", this.pathCount);
+      .replace("${PATH_NODES}", this.paths.nodes)
+      .replace("${PATH_COMPONENTS}", this.paths.components)
+      .replace("${PATH_COUNT}", this.paths.count);
 
     return new THREE.ShaderMaterial({
       uniforms: {
@@ -112,52 +154,38 @@ export default class MovingParticles extends Actor {
       const z = 0;
 
       array[i * 3 + 0] = x;
-      array[i * 3 + 1] = -y; // flip y
+      array[i * 3 + 1] = y;
       array[i * 3 + 2] = z;
     }
 
     return new THREE.Float32BufferAttribute(array, 3);
   }
 
+  _transformCoordinates(coordinates) {
+    const width = this.stage.renderer.domElement.clientWidth;
+    const height = this.stage.renderer.domElement.clientHeight;
+
+    const newCoordinates = [];
+
+    for (let i = 0; i < coordinates.length; i += 2) {
+      const x = coordinates[i] / width * 2 - 1;
+      const y = -coordinates[i + 1] / height * 2 + 1;
+      const newCoord = this._raycast(x, y);
+      // const newCoord = [x, y];
+      newCoordinates.push(newCoord[0]);
+      newCoordinates.push(newCoord[1]);
+      // newCoordinates.push(coordinates[i]);
+      // newCoordinates.push(coordinates[i + 1]);
+    }
+
+    return newCoordinates;
+  }
+
   _getPathsUniform() {
     log("creating paths attribute");
     // [ x1, y1, x2, y2, x3, y3, ..., xN, yN ]
-    return new THREE.Uniform(
-      [
-        324,
-        534,
-        575,
-        408,
-        825,
-        281,
-        1076,
-        157,
-        324,
-        534,
-        574,
-        658,
-        826,
-        533,
-        1077,
-        658,
-        324,
-        534,
-        574,
-        658,
-        825,
-        783,
-        1077,
-        909
-      ].map((v, i) => {
-        if (i % 2 === 0) {
-          // offset x values a certain amount to center the graph
-          return (v - window.innerWidth / 2) * 0.9;
-        } else {
-          // offset y values a certain amount to center the graph
-          return -(v - window.innerHeight / 2) * 0.9;
-        }
-      })
-    );
+    // const coords = this._transformCoordinates(this.paths.coordinates);
+    return new THREE.Uniform(this.paths.coordinates);
     // return new THREE.Uniform(
     //   [
     //     58, // path 0
@@ -217,7 +245,7 @@ export default class MovingParticles extends Actor {
    * Choose a path using the given probability distribution.
    */
   _pickPath(x = 0) {
-    const probabilitySums = this.paths.slice();
+    const probabilitySums = this.probability.slice();
 
     // add up the probabilities sequentially, so the final number in the array is 1.0
 

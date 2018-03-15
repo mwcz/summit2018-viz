@@ -1,4 +1,7 @@
 import { chain, map, uniq, flatten, each } from "lodash";
+import * as lodash from "lodash";
+
+window._ = lodash;
 
 ////////////////////////////////////////////////////////////////////////
 //                               POINT                                //
